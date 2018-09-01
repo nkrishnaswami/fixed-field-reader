@@ -5,14 +5,15 @@ fixed-width fields and a factory for creating them.
 from collections import namedtuple
 import struct
 
+from .error import *
 
 class FixedFieldReaderBase(object):
-    """Base class for reading files with lines structured as fixed-width
+    """Base class for reading iterables of lines structured as fixed-width
     fields.
 
     """
     def __init__(self, file, struct, names, wholeline):
-        """@param file the file to read.
+        """@param file the file (iterable of lines) to read.
         @param struct the struct instance for the fields.
         @param names an iterable of field names.
         @param wholeline if true, throw an exception if the field
@@ -26,8 +27,14 @@ class FixedFieldReaderBase(object):
             self.unpack = self.struct.unpack
         else:
             self.unpack = self.struct.unpack_from
+        self.line_num = None
 
-    def _split(self, line, lineno):
+    def _readlines(self):
+        for line_num, line in enumerate(self.file, 1):
+            self.line_num = line_num
+            yield line
+        
+    def _split(self, line):
         line = line.rstrip(b'\r\n')
         try:
             return (
@@ -35,9 +42,11 @@ class FixedFieldReaderBase(object):
                 for x in self.unpack(line)
             )
         except struct.error as error:
-            raise RuntimeError(
-                str(error) +
-                " but line {} is {} bytes".format(lineno+1, len(line)))
+            raise RowLengthError(
+                self.line_num,
+                str(error) + " but line is {} bytes".format(len(line)),
+                exp_len=self.struct.size,
+                act_len=len(line))
 
 
 class FixedFieldReader(FixedFieldReaderBase):
@@ -48,9 +57,9 @@ class FixedFieldReader(FixedFieldReaderBase):
     def __init__(self, file, struct, names, wholeline):
         super().__init__(file, struct, names, wholeline)
 
-    def readlines(self):
-        for lineno, line in enumerate(self.file.readlines()):
-            yield self._split(line, lineno)
+    def __iter__(self):
+        for line in self._readlines():
+            yield self._split(line)
 
 
 class FixedFieldDictReader(FixedFieldReaderBase):
@@ -61,9 +70,9 @@ class FixedFieldDictReader(FixedFieldReaderBase):
     def __init__(self, file, struct, names, wholeline):
         super().__init__(file, struct, names, wholeline)
 
-    def readlines(self):
-        for lineno, line in enumerate(self.file.readlines()):
-            yield dict(zip(self.names,self._split(line, lineno)))
+    def __iter__(self):
+        for line in self._readlines():
+            yield dict(zip(self.names,self._split(line)))
 
 
 class FixedFieldReaderFactory(object):
@@ -87,7 +96,7 @@ class FixedFieldReaderFactory(object):
             if descriptor.type != 'x'
         ]
 
-    def reader(self, file, wholeline=False, usedict=False):
+    def reader(self, file, *, wholeline=False, usedict=False):
         if usedict:
             return FixedFieldDictReader(file, self.struct, self.names, wholeline)
         else:
