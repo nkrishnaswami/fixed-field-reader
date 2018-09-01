@@ -9,9 +9,8 @@ For example,
  * [NCHS Vital Statistics](https://www.cdc.gov/nchs/data_access/vitalstatsonline.htm)
 
 ## Usage
-
+For an example, see [examples.ipynb](examples/examples.ipynb).
 
 
 ## TODO
-* add examples
 * add support for optional fields/mixed line formats
