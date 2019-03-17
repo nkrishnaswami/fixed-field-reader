@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="fixedfieldreader",
-    version="0.9.0",
+    version="1.0.0",
     packages=find_packages(),
     description="Reader for lines with fixed-width fields",
     long_description="""This module provides classes to read and split files whose lines contain fixed-width fields, such as the FHFA PUDB or CDC WONDER mortality datasets.""",
@@ -20,7 +20,7 @@ setup(
     author="Natarajan Krishnaswami",
     author_email="nkrish@acm.org",
     classifiers=[
-        'Development Status :: 2 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',

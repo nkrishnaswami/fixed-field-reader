@@ -1,3 +1,18 @@
+# Copyright 2019 Natarajan Krishnaswami
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 """This contains classes for reading files with lines structured as
 fixed-width fields and a factory for creating them.
 
@@ -69,6 +84,17 @@ class FixedFieldReader(FixedFieldReaderBase):
 
     """
     def __init__(self, file, struct, names, wholeline, badlines='error'):
+        """@param file the file (iterable of lines) to read.
+        @param struct the struct instance for the fields.
+        @param names an iterable of field names.
+        @param wholeline if true, throw an exception if the field
+          sizes do not comprise the entire line.
+        @param badlines one of 'error' (raise an exception), 'warn'
+          (print a warning and continue), and 'ignore' (silently
+          continue) to control behavior on processing malformed
+          records.
+
+        """
         super().__init__(file, struct, names, wholeline, badlines)
 
     def __iter__(self):
@@ -90,6 +116,17 @@ class FixedFieldDictReader(FixedFieldReaderBase):
 
     """
     def __init__(self, file, struct, names, wholeline, badlines='error'):
+        """@param file the file (iterable of lines) to read.
+        @param struct the struct instance for the fields.
+        @param names an iterable of field names.
+        @param wholeline if true, throw an exception if the field
+          sizes do not comprise the entire line.
+        @param badlines one of 'error' (raise an exception), 'warn'
+          (print a warning and continue), and 'ignore' (silently
+          continue) to control behavior on processing malformed
+          records.
+
+        """
         super().__init__(file, struct, names, wholeline, badlines)
 
     def __iter__(self):
@@ -113,6 +150,12 @@ class FixedFieldReaderFactory(object):
     Descriptor = namedtuple('Descriptor', ['name', 'len', 'type'])
 
     def __init__(self, *descriptors):
+        """@param *descriptors tuples of (`name`, `len`, `type`)
+             tuples. `name` is the name of the field in the dictionary.
+             `len` is the length in bytes. `type` is the type code from
+             the `struct` package.
+
+        """
         self.descriptors = [
             self.Descriptor(*descriptor) for descriptor in descriptors
         ]
@@ -127,6 +170,14 @@ class FixedFieldReaderFactory(object):
         ]
 
     def reader(self, file, *, wholeline=False, usedict=False, badlines='error'):
+        """@param wholeline if true, throw an exception if the field
+          sizes do not comprise the entire line.
+        @param usedict create a `FixedFieldDictReader` instead of a `FixedFieldReader`
+        @param badlines one of 'error' (raise an exception), 'warn'
+          (print a warning and continue), and 'ignore' (silently
+          continue) to control behavior on processing malformed
+          records.
+        """
         if usedict:
             return FixedFieldDictReader(file, self.struct, self.names, wholeline, badlines)
         else:
