@@ -1,6 +1,7 @@
 from collections import OrderedDict
-from io import BytesIO
 import fixedfieldreader as ffr
+from io import BytesIO, StringIO
+import logging
 
 field_descs = [
     ('f1', 2, 'x'),
@@ -77,3 +78,35 @@ def reader_nowholeline_usedict_test_norowerror():
             assert {'f2': '222', 'f3': '3'} == fields
     except ffr.Error as e:
         assert False
+
+def reader_nowholeline_usedict_test_warnbadlines():
+    lines = [b'11222', b'1122233']
+    exp = 'Error at line 1: unpack_from requires a buffer of at least 6 bytes but line is 5 bytes'
+    sio = StringIO()
+    handler = logging.StreamHandler(sio)
+    logger = logging.getLogger('fixedfieldreader')
+    logger.addHandler(handler)
+    try:
+        for fields in factory.reader(lines, wholeline=False, usedict=True, badlines='warn'):
+            assert {'f2': '222', 'f3': '3'} == fields
+    except ffr.Error as e:
+        logger.removeHandler(handler)
+        assert False
+    logger.removeHandler(handler)
+    assert sio.getvalue().strip() == exp
+
+def reader_nowholeline_usedict_test_ignorebadlines():
+    lines = [b'11222', b'1122233']
+    exp = ''
+    sio = StringIO()
+    handler = logging.StreamHandler(sio)
+    logger = logging.getLogger('fixedfieldreader')
+    logger.addHandler(handler)
+    try:
+        for fields in factory.reader(lines, wholeline=False, usedict=True, badlines='ignore'):
+            assert {'f2': '222', 'f3': '3'} == fields
+    except ffr.Error as e:
+        logger.removeHandler(handler)
+        assert False
+    logger.removeHandler(handler)
+    assert sio.getvalue().strip() == exp
